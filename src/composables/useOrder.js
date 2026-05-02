@@ -67,22 +67,36 @@ export function useOrder(packages, packagingOptions, menuItems) {
   // ============ ACTIVATE CUSTOM FROM PAKET BISNIS ============
   const activateCustomFromPackage = (pkg) => {
     if (!pkg?.baseItemIds) return
+    // Reset state lain yg tidak relevan di custom mode supaya fresh start
+    note.value = ''
+    packagingId.value = null
+    // Build cart fresh (replace, bukan merge)
     const cart = {}
     pkg.baseItemIds.forEach((id) => {
       cart[id] = 1
     })
     customCart.value = cart
-    customSourceLabel.value = pkg.name // misal: "Paket Bisnis"
+    customSourceLabel.value = pkg.name
     selectedPackageId.value = null
     activeMode.value = 'custom'
   }
-
   const switchMode = (mode) => {
     activeMode.value = mode
     if (mode === 'paket') customSourceLabel.value = ''
   }
 
   const resetCustom = () => {
+    customCart.value = {}
+    customSourceLabel.value = ''
+  }
+
+  // Reset SEMUA state ke nilai awal (dipanggil setelah submit WA)
+  const resetAll = () => {
+    activeMode.value = 'paket'
+    selectedPackageId.value = null
+    quantity.value = 20
+    packagingId.value = null
+    note.value = ''
     customCart.value = {}
     customSourceLabel.value = ''
   }
@@ -194,6 +208,7 @@ export function useOrder(packages, packagingOptions, menuItems) {
     activateCustomFromPackage,
     switchMode,
     resetCustom,
+    resetAll, // ← Tambah resetAll
     formatIDR,
     buildWhatsappUrl,
   }

@@ -430,10 +430,10 @@ onUnmounted(() => {
 }
 
 .drawer__brand {
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 600;
-  font-variation-settings: 'opsz' 144;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--color-charcoal);
 }
 
@@ -466,8 +466,10 @@ onUnmounted(() => {
   gap: 1rem;
   padding: 1rem 1.5rem;
   color: var(--color-charcoal);
-  font-size: 1.125rem;
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   position: relative;
   opacity: 0;
   transform: translateX(20px);
@@ -501,17 +503,18 @@ onUnmounted(() => {
 }
 
 .drawer__num {
-  font-family: var(--font-display);
-  font-size: 0.75rem;
-  font-style: italic;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--color-red);
-  font-variation-settings: 'opsz' 9;
+  min-width: 22px;
 }
 
 .drawer__name {
-  font-family: var(--font-display);
-  font-variation-settings: 'opsz' 144;
-  letter-spacing: -0.01em;
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 @keyframes drawerItem {

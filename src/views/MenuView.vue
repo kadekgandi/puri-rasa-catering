@@ -54,7 +54,13 @@ const filteredMenu = computed(() => {
 
 const submitOrder = () => {
   if (!order.hasOrder.value) return
+  // 1. Buka WhatsApp dulu
   window.open(order.buildWhatsappUrl(), '_blank', 'noopener,noreferrer')
+  // 2. Beri delay sedikit supaya tab WA sempat terbuka, lalu reset
+  setTimeout(() => {
+    order.resetAll()
+    view.value = 'list'
+  }, 500)
 }
 
 const handleEsc = (e) => {
