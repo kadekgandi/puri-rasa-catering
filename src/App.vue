@@ -1,6 +1,12 @@
 <script setup>
+import { onMounted } from 'vue'
+import { inject } from '@vercel/analytics'
 import TheNavbar from '@/components/global/TheNavbar.vue'
 import TheFooter from '@/components/global/TheFooter.vue'
+
+onMounted(() => {
+  inject()
+})
 </script>
 
 <template>
