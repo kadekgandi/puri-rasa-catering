@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted } from 'vue'
 import { inject } from '@vercel/analytics'
+import { injectSpeedInsights } from '@vercel/speed-insights'
 import TheNavbar from '@/components/global/TheNavbar.vue'
 import TheFooter from '@/components/global/TheFooter.vue'
 
 onMounted(() => {
   inject()
+  injectSpeedInsights()
 })
 </script>
 
