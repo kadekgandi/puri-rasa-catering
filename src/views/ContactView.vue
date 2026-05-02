@@ -70,7 +70,7 @@ onUnmounted(() => {
             <p class="faq-head__desc">
               Tidak menemukan jawaban yang Anda cari?
               <a
-                href="https://wa.me/6282145108485"
+                href="https://wa.me/6289517733600"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="faq-head__link"
@@ -153,7 +153,7 @@ onUnmounted(() => {
             <div class="channel__value">089517733600</div>
 
             <a
-              href="https://wa.me/6282145108485"
+              href="https://wa.me/6289517733600"
               target="_blank"
               rel="noopener noreferrer"
               class="channel__btn channel__btn--wa"

@@ -173,7 +173,7 @@ onUnmounted(() => {
             Setiap pesanan adalah cerita baru yang kami rangkum dengan rasa terbaik.
           </p>
           <a
-            href="https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20katering%20untuk%20acara%20saya."
+            href="https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20katering%20untuk%20acara%20saya."
             target="_blank"
             rel="noopener noreferrer"
             class="t-cta__btn"

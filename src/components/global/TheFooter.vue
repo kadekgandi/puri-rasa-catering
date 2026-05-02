@@ -18,12 +18,12 @@ const services = [
   },
   {
     name: 'Layanan Adat & Wedding',
-    href: 'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Adat.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
+    href: 'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Adat.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
     isInternal: false,
   },
   {
     name: 'Layanan Rumah (Private)',
-    href: 'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Rumah.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
+    href: 'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Rumah.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
     isInternal: false,
   },
 ]
@@ -132,7 +132,7 @@ const services = [
         <ul class="footer__contact">
           <li>
             <a
-              href="https://wa.me/6282145108485"
+              href="https://wa.me/6289517733600"
               target="_blank"
               rel="noopener noreferrer"
               class="footer__contact-item"

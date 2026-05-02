@@ -4,7 +4,7 @@ import { testimonials } from '@/data/testimonials.js'
 import logoPuriRasa from '@/assets/images/logo-puri-rasa.svg'
 
 const whatsappConsult =
-  'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20paket%20katering%20untuk%20acara%20saya.'
+  'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20paket%20katering%20untuk%20acara%20saya.'
 
 // ============ KATEGORI MENU (Iconic Grid) ============
 const categories = [

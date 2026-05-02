@@ -17,7 +17,7 @@ const navLinks = [
 ]
 
 const whatsappUrl =
-  'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20bertanya%20tentang%20katering.'
+  'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20bertanya%20tentang%20katering.'
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 24

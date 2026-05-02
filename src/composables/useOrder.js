@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 
-const WA_NUMBER = '6282145108485'
+const WA_NUMBER = '6289517733600'
 
 const activeMode = ref('paket') // 'paket' | 'custom'
 const selectedPackageId = ref(null)

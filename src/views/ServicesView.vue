@@ -19,7 +19,7 @@ const services = [
     bestFor: ['Pernikahan', 'Pawiwahan', 'Upacara Adat', 'Gala Dinner'],
     cta: 'Pesan Layanan Adat',
     waUrl:
-      'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Adat.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
+      'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Adat.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
     accent: 'red',
   },
   {
@@ -38,7 +38,7 @@ const services = [
     bestFor: ['Reuni Keluarga', 'Arisan Eksklusif', 'Birthday Privat', 'Family Day'],
     cta: 'Pesan Layanan Rumah',
     waUrl:
-      'https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Rumah.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
+      'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20tertarik%20untuk%20memesan%20Layanan%20Rumah.%20Bisa%20minta%20info%20lebih%20lanjut%3F',
     accent: 'gold',
   },
 ]
@@ -229,7 +229,7 @@ onUnmounted(() => {
           </div>
 
           <a
-            href="https://wa.me/6282145108485?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20layanan%20katering%20untuk%20acara%20saya."
+            href="https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20layanan%20katering%20untuk%20acara%20saya."
             target="_blank"
             rel="noopener noreferrer"
             class="s-cta__btn"
