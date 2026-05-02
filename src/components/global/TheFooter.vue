@@ -149,7 +149,7 @@ const services = [
               </span>
               <span>
                 <span class="footer__contact-label">WhatsApp</span>
-                <span class="footer__contact-value">082145108485</span>
+                <span class="footer__contact-value">089517733600</span>
               </span>
             </a>
           </li>

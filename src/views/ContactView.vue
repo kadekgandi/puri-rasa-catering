@@ -150,7 +150,7 @@ onUnmounted(() => {
               Tim kami aktif setiap hari pukul 07.00–21.00 WITA. Konsultasi gratis, tanpa komitmen.
             </p>
 
-            <div class="channel__value">082145108485</div>
+            <div class="channel__value">089517733600</div>
 
             <a
               href="https://wa.me/6282145108485"

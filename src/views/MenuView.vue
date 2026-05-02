@@ -470,7 +470,7 @@ watch(
               </button>
 
               <p class="big-cta__hint">
-                Pesanan terkirim ke <strong>082145108485</strong>. Admin akan balas dengan
+                Pesanan terkirim ke <strong>089517733600</strong>. Admin akan balas dengan
                 konfirmasi & jadwal pengiriman.
               </p>
             </section>

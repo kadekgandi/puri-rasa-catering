@@ -168,7 +168,7 @@ onUnmounted(() => {
               </svg>
               Pesan via WhatsApp
             </a>
-            <p class="drawer__meta">082145108485 &middot; Singaraja, Bali</p>
+            <p class="drawer__meta">089517733600 &middot; Singaraja, Bali</p>
           </div>
         </aside>
       </Transition>
