@@ -64,25 +64,25 @@ export const packagingOptions = [
     id: 'kertas',
     name: 'Kertas Nasi Standar',
     desc: 'Klasik & ramah lingkungan',
-    image: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&auto=format&q=80',
+    image: '/images/packaging/kertasnasi.svg',
   },
   {
     id: 'daun',
     name: 'Daun',
     desc: 'Aroma alami & tradisional',
-    image: 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&auto=format&q=80',
+    image: '/images/packaging/daun.svg',
   },
   {
     id: 'kotak-standar',
     name: 'Kotak Nasi Standar',
     desc: 'Praktis & mudah dibawa',
-    image: 'https://images.unsplash.com/photo-1607330289024-1535c6b4e1c1?w=400&auto=format&q=80',
+    image: '/images/packaging/kotakstandar.svg',
   },
   {
     id: 'besek-bali',
     name: 'Besek Bali',
     desc: 'Estetik anyaman tradisional',
-    image: 'https://images.unsplash.com/photo-1625938144755-652e08e359b7?w=400&auto=format&q=80',
+    image: '/images/packaging/besek.svg',
   },
 ]
 
