@@ -13,7 +13,7 @@ const toggleFaq = (id) => {
 const copied = ref(false)
 const copyEmail = async () => {
   try {
-    await navigator.clipboard.writeText('reqgandi@gmail.com')
+    await navigator.clipboard.writeText('purirasachat@gmail.com')
     copied.value = true
     setTimeout(() => {
       copied.value = false
@@ -204,10 +204,10 @@ onUnmounted(() => {
               jam.
             </p>
 
-            <div class="channel__value">reqgandi@gmail.com</div>
+            <div class="channel__value">purirasachat@gmail.com</div>
 
             <div class="channel__actions">
-              <a href="mailto:reqgandi@gmail.com" class="channel__btn channel__btn--email">
+              <a href="mailto:purirasachat@gmail.com" class="channel__btn channel__btn--email">
                 Kirim Email
                 <svg
                   width="14"

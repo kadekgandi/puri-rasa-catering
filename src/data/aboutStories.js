@@ -33,7 +33,7 @@ export const aboutStories = [
     eyebrow: 'Orang-Orang',
     title: 'Tiga generasi, satu meja kerja.',
     body: [
-      'Puri Rasa dijalankan oleh tiga generasi yang bekerja berdampingan di satu dapur: Mbok Ketut sebagai pemegang resep utama, putrinya Bu Made yang memimpin operasional harian, dan cucunya Gandi yang membangun sisi modern—mulai dari sistem pemesanan hingga website yang sedang Anda buka ini.',
+      'Puri Rasa dijalankan oleh tiga generasi yang bekerja berdampingan di satu dapur: Mbok Ketut sebagai pemegang resep utama, putrinya Bu Made yang memimpin operasional harian, dan Anaknya Wayah Marga yang membangun sisi modern—mulai dari sistem pemesanan hingga website yang sedang Anda buka ini.',
       'Selain keluarga inti, ada lebih dari 12 kru dapur dan kru lapangan yang sudah bekerja bersama kami selama bertahun-tahun. Banyak dari mereka adalah tetangga sendiri—yang juga ikut tumbuh bersama bisnis ini.',
       'Bagi kami, "tim" dan "keluarga" adalah kata yang sama.',
     ],

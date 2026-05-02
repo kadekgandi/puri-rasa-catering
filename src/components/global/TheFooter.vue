@@ -154,7 +154,7 @@ const services = [
             </a>
           </li>
           <li>
-            <a href="mailto:reqgandi@gmail.com" class="footer__contact-item">
+            <a href="mailto:purirasachat@gmail.com" class="footer__contact-item">
               <span class="footer__contact-icon">
                 <svg
                   width="16"
@@ -174,7 +174,7 @@ const services = [
               </span>
               <span>
                 <span class="footer__contact-label">Email</span>
-                <span class="footer__contact-value">reqgandi@gmail.com</span>
+                <span class="footer__contact-value">purirasachat@gmail.com</span>
               </span>
             </a>
           </li>
