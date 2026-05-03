@@ -16,10 +16,21 @@ const openDetail = (id) => {
   })
 }
 
+// Lanjut dari Custom List → Custom Detail (review packaging + catatan)
+const goCustomDetail = () => {
+  if (order.customTotalItems.value === 0) return
+  view.value = 'detail'
+  nextTick(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  })
+}
+
 const backToList = () => {
   view.value = 'list'
   nextTick(() => {
-    const el = document.querySelector('[data-section="packages"]')
+    // Scroll ke section yang sesuai dengan mode aktif
+    const sectionAttr = order.activeMode.value === 'custom' ? 'custom' : 'packages'
+    const el = document.querySelector(`[data-section="${sectionAttr}"]`)
     if (el) {
       const top = el.getBoundingClientRect().top + window.scrollY - 80
       window.scrollTo({ top, behavior: 'smooth' })
@@ -52,6 +63,16 @@ const filteredMenu = computed(() => {
   return menuItems.filter((m) => m.category === activeCategory.value)
 })
 
+// Daftar item yang dipilih di custom cart, dengan data lengkap untuk render di detail
+const customCartItems = computed(() => {
+  return Object.entries(order.customCart.value)
+    .map(([id, qty]) => {
+      const item = menuItems.find((m) => m.id === Number(id))
+      return item ? { ...item, qty } : null
+    })
+    .filter(Boolean)
+})
+
 const submitOrder = () => {
   if (!order.hasOrder.value) return
   // 1. Buka WhatsApp dulu
@@ -79,6 +100,16 @@ watch(
   () => order.activeMode.value,
   () => {
     if (view.value === 'detail') view.value = 'list'
+  },
+)
+
+// Auto-bounce ke list kalau user kosongkan cart saat di custom detail
+watch(
+  () => order.customTotalItems.value,
+  (val) => {
+    if (val === 0 && view.value === 'detail' && order.activeMode.value === 'custom') {
+      view.value = 'list'
+    }
   },
 )
 </script>
@@ -479,9 +510,291 @@ watch(
       </section>
     </Transition>
 
+    <!-- ===================== CUSTOM DETAIL VIEW ===================== -->
+    <Transition name="detail">
+      <section
+        v-if="
+          order.activeMode.value === 'custom' &&
+          view === 'detail' &&
+          order.customTotalItems.value > 0
+        "
+        class="detail-section"
+      >
+        <div class="container">
+          <!-- BREADCRUMB & BACK -->
+          <div class="detail-nav">
+            <button
+              class="back-btn"
+              @click="backToList"
+              type="button"
+              aria-label="Kembali ke pemilihan menu custom"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              Kembali
+            </button>
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+              <button class="breadcrumb__link" @click="backToList" type="button">Menu</button>
+              <span class="breadcrumb__sep" aria-hidden="true">/</span>
+              <span class="breadcrumb__current">
+                {{
+                  order.customSourceLabel.value
+                    ? `Custom · ${order.customSourceLabel.value}`
+                    : 'Custom Box'
+                }}
+              </span>
+            </nav>
+          </div>
+
+          <!-- HEADER -->
+          <header class="detail-head">
+            <div class="detail-head__main">
+              <span class="detail-head__tagline">
+                {{
+                  order.customSourceLabel.value
+                    ? `Berdasarkan ${order.customSourceLabel.value}`
+                    : 'Build Your Own'
+                }}
+              </span>
+              <h1 class="detail-head__title">Custom Box</h1>
+              <p class="detail-head__desc">
+                Review isi box-mu, pilih packaging, lalu tambahkan catatan jika perlu sebelum kirim
+                ke WhatsApp.
+              </p>
+            </div>
+
+            <div class="detail-head__price-tag">
+              <span class="detail-head__price-label">Total Item</span>
+              <span class="detail-head__price-value">{{ order.customTotalItems.value }} item</span>
+              <span class="detail-head__price-meta">
+                {{ order.formatIDR(order.customTotalPrice.value) }}
+              </span>
+            </div>
+          </header>
+
+          <!-- FORM CARDS -->
+          <div class="detail-form">
+            <!-- 01 ISI BOX (custom items list) -->
+            <section class="form-card">
+              <header class="form-card__head">
+                <span class="form-card__step">01</span>
+                <div>
+                  <h3 class="form-card__title">Isi Box</h3>
+                  <p class="form-card__sub">
+                    Atur jumlah tiap item, atau klik tombol di bawah untuk tambah item lain.
+                  </p>
+                </div>
+              </header>
+
+              <ul class="custom-items">
+                <li v-for="item in customCartItems" :key="item.id" class="custom-items__item">
+                  <div class="custom-items__media">
+                    <img :src="item.image" :alt="item.name" loading="lazy" />
+                  </div>
+                  <div class="custom-items__info">
+                    <h4 class="custom-items__name">{{ item.name }}</h4>
+                    <div class="custom-items__meta">
+                      <span class="custom-items__cat">{{ item.category }}</span>
+                      <span class="custom-items__divider" aria-hidden="true">·</span>
+                      <span class="custom-items__subtotal">{{
+                        order.formatIDR(item.price * item.qty)
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="custom-items__stepper">
+                    <button
+                      @click="order.removeItem(item.id)"
+                      class="stepper__btn stepper__btn--sm"
+                      :aria-label="`Kurangi ${item.name}`"
+                      type="button"
+                    >
+                      −
+                    </button>
+                    <span class="stepper__val stepper__val--sm">{{ item.qty }}</span>
+                    <button
+                      @click="order.addItem(item.id)"
+                      class="stepper__btn stepper__btn--sm"
+                      :aria-label="`Tambah ${item.name}`"
+                      type="button"
+                    >
+                      +
+                    </button>
+                  </div>
+                </li>
+              </ul>
+
+              <button
+                class="edit-cart-cta"
+                @click="backToList"
+                type="button"
+                aria-label="Kembali untuk menambah atau mengganti item"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Tambah / Ganti Item
+              </button>
+            </section>
+
+            <!-- 02 PACKAGING -->
+            <section class="form-card">
+              <header class="form-card__head">
+                <span class="form-card__step">02</span>
+                <div>
+                  <h3 class="form-card__title">Pilihan Packaging</h3>
+                  <p class="form-card__sub">Tap salah satu untuk memilih.</p>
+                </div>
+              </header>
+
+              <div class="packaging-grid">
+                <button
+                  v-for="pkgOpt in packagingOptions"
+                  :key="pkgOpt.id"
+                  class="pkg-opt"
+                  :class="{ 'is-active': order.packagingId.value === pkgOpt.id }"
+                  @click="order.packagingId.value = pkgOpt.id"
+                  type="button"
+                >
+                  <div class="pkg-opt__img">
+                    <img :src="pkgOpt.image" :alt="pkgOpt.name" loading="lazy" />
+                    <span class="pkg-opt__check" aria-hidden="true">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+                  </div>
+                  <span class="pkg-opt__name">{{ pkgOpt.name }}</span>
+                  <span class="pkg-opt__desc">{{ pkgOpt.desc }}</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 03 CATATAN -->
+            <section class="form-card">
+              <header class="form-card__head">
+                <span class="form-card__step">03</span>
+                <div>
+                  <h3 class="form-card__title">Catatan Khusus</h3>
+                  <p class="form-card__sub">
+                    Opsional — alergi, request rasa, jam pengiriman, dll.
+                  </p>
+                </div>
+              </header>
+
+              <textarea
+                v-model="order.note.value"
+                class="textarea"
+                rows="4"
+                placeholder="Misal: alergi udang, request rasa kurang pedas..."
+              ></textarea>
+            </section>
+
+            <!-- 04 SUMMARY & CTA -->
+            <section class="form-card form-card--summary">
+              <header class="form-card__head">
+                <span class="form-card__step">04</span>
+                <div>
+                  <h3 class="form-card__title">Konfirmasi Pesanan</h3>
+                  <p class="form-card__sub">Review ringkasan sebelum kirim ke WhatsApp.</p>
+                </div>
+              </header>
+
+              <div class="summary">
+                <div class="summary__row">
+                  <span class="summary__label">Mode</span>
+                  <span class="summary__value">
+                    {{
+                      order.customSourceLabel.value
+                        ? `Custom · ${order.customSourceLabel.value}`
+                        : 'Custom Box'
+                    }}
+                  </span>
+                </div>
+                <div class="summary__row">
+                  <span class="summary__label">Total Item</span>
+                  <span class="summary__value">{{ order.customTotalItems.value }} item</span>
+                </div>
+                <div v-if="order.selectedPackaging.value" class="summary__row">
+                  <span class="summary__label">Packaging</span>
+                  <span class="summary__value">{{ order.selectedPackaging.value.name }}</span>
+                </div>
+                <div v-else class="summary__row">
+                  <span class="summary__label">Packaging</span>
+                  <span class="summary__value summary__value--warn">Belum dipilih</span>
+                </div>
+
+                <div class="summary__divider"></div>
+
+                <div class="summary__row summary__row--total">
+                  <span class="summary__label">Estimasi Total</span>
+                  <span class="summary__value">{{
+                    order.formatIDR(order.customTotalPrice.value)
+                  }}</span>
+                </div>
+              </div>
+
+              <button class="big-cta" @click="submitOrder" type="button">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4-.1-.5-.1-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.5 1.1 2.7.1.2 1.9 2.9 4.6 4.1.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.5-.3z"
+                  />
+                  <path
+                    d="M20.5 3.5C18.3 1.2 15.3 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h.1c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"
+                  />
+                </svg>
+                Pesan via WhatsApp
+              </button>
+
+              <p class="big-cta__hint">
+                Pesanan terkirim ke <strong>089517733600</strong>. Admin akan balas dengan
+                konfirmasi & jadwal pengiriman.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+    </Transition>
+
     <!-- ===================== CUSTOM SECTION ===================== -->
     <section
-      v-show="order.activeMode.value === 'custom'"
+      v-show="order.activeMode.value === 'custom' && view === 'list'"
       class="custom-section"
       data-section="custom"
     >
@@ -600,16 +913,22 @@ watch(
               order.formatIDR(order.summaryTotal.value)
             }}</span>
           </div>
-          <button class="big-cta big-cta--custom" @click="submitOrder" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4-.1-.5-.1-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.5 1.1 2.7.1.2 1.9 2.9 4.6 4.1.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.5-.3z"
-              />
-              <path
-                d="M20.5 3.5C18.3 1.2 15.3 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h.1c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"
-              />
+          <button class="big-cta big-cta--continue" @click="goCustomDetail" type="button">
+            Lanjut ke Detail Pesanan
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
             </svg>
-            Pesan via WhatsApp
           </button>
         </div>
       </div>
@@ -1987,6 +2306,154 @@ watch(
   margin: 0;
 }
 
+/* ===================== BIG CTA — CONTINUE VARIANT ===================== */
+/* Tombol "Lanjut ke Detail Pesanan" di custom list (warna brand, bukan WA hijau) */
+.big-cta--continue {
+  background: var(--color-charcoal);
+  box-shadow: 0 10px 28px -8px rgba(28, 19, 17, 0.35);
+  margin: 0;
+}
+
+.big-cta--continue:hover {
+  background: var(--color-red);
+  box-shadow: 0 12px 32px -8px rgba(178, 58, 58, 0.4);
+}
+
+.big-cta--continue svg {
+  transition: transform var(--transition);
+}
+
+.big-cta--continue:hover svg {
+  transform: translateX(3px);
+}
+
+/* ===================== CUSTOM ITEMS LIST (di Detail View) ===================== */
+.custom-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+}
+
+.custom-items__item {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem;
+  background: var(--color-cream);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
+}
+
+.custom-items__item:hover {
+  background: var(--color-white);
+  box-shadow: 0 6px 16px -8px rgba(28, 19, 17, 0.08);
+}
+
+.custom-items__media {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.custom-items__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.custom-items__info {
+  min-width: 0;
+}
+
+.custom-items__name {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-charcoal);
+  margin: 0 0 0.22rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-items__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
+.custom-items__cat {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.custom-items__divider {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.custom-items__subtotal {
+  font-weight: 700;
+  color: var(--color-red);
+  letter-spacing: -0.005em;
+}
+
+.custom-items__stepper {
+  display: flex;
+  align-items: center;
+  background: var(--color-white);
+  border: 1px solid rgba(28, 19, 17, 0.06);
+  border-radius: var(--radius-full);
+  padding: 0.18rem;
+}
+
+.custom-items__item:hover .custom-items__stepper {
+  border-color: rgba(28, 19, 17, 0.12);
+}
+
+/* ===================== EDIT CART CTA ===================== */
+.edit-cart-cta {
+  margin-top: 0.85rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(28, 19, 17, 0.18);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.edit-cart-cta:hover {
+  background: var(--color-white);
+  border-color: var(--color-red);
+  border-style: solid;
+  color: var(--color-red);
+  transform: translateY(-1px);
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 960px) {
   .detail-head {
@@ -1994,9 +2461,9 @@ watch(
     gap: 1rem;
   }
   .detail-head__price-tag {
-    align-items: flex-start;
-    text-align: left;
-    width: fit-content;
+    align-items: center;
+    text-align: center;
+    width: 100%;
   }
 }
 
@@ -2190,6 +2657,35 @@ watch(
   .menu-card__add {
     padding: 0.5rem;
     font-size: 0.74rem;
+  }
+
+  /* Custom items list - lebih kompak di mobile kecil */
+  .custom-items__item {
+    grid-template-columns: 46px 1fr auto;
+    gap: 0.6rem;
+    padding: 0.5rem;
+  }
+  .custom-items__media {
+    width: 46px;
+    height: 46px;
+  }
+  .custom-items__name {
+    font-size: 0.85rem;
+  }
+  .custom-items__meta {
+    font-size: 0.74rem;
+    gap: 0.35rem;
+  }
+  .custom-items__cat {
+    display: none;
+  }
+  .custom-items__divider {
+    display: none;
+  }
+
+  .edit-cart-cta {
+    font-size: 0.8rem;
+    padding: 0.65rem 0.85rem;
   }
 }
 </style>

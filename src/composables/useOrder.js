@@ -160,6 +160,11 @@ export function useOrder(packages, packagingOptions, menuItems) {
         ? `Custom · ${customSourceLabel.value}`
         : 'Custom Box (Build Your Own)'
       lines.push(`*Mode:* ${headerLabel}`)
+      lines.push(`*Total item:* ${customTotalItems.value}`)
+      lines.push(`*Estimasi total:* ${formatIDR(customTotalPrice.value)}`)
+      if (selectedPackaging.value) {
+        lines.push(`*Packaging:* ${selectedPackaging.value.name}`)
+      }
       lines.push('')
       lines.push('*Isi box:*')
       Object.entries(customCart.value).forEach(([id, qty]) => {
@@ -168,9 +173,11 @@ export function useOrder(packages, packagingOptions, menuItems) {
           lines.push(`• ${item.name} × ${qty} — ${formatIDR(item.price * qty)}`)
         }
       })
-      lines.push('')
-      lines.push(`*Total item:* ${customTotalItems.value}`)
-      lines.push(`*Estimasi total:* ${formatIDR(customTotalPrice.value)}`)
+      if (note.value.trim()) {
+        lines.push('')
+        lines.push(`*Catatan khusus:*`)
+        lines.push(note.value.trim())
+      }
     }
 
     lines.push('')
