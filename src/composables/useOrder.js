@@ -20,9 +20,12 @@ export function useOrder(packages, packagingOptions, menuItems) {
     () => packagingOptions.find((p) => p.id === packagingId.value) || null,
   )
 
+  // Biaya packaging per box (0 jika tidak dipilih atau gratis)
+  const packagingCost = computed(() => selectedPackaging.value?.price ?? 0)
+
   const packageTotal = computed(() => {
     if (!selectedPackage.value) return 0
-    return selectedPackage.value.price * quantity.value
+    return (selectedPackage.value.price + packagingCost.value) * quantity.value
   })
 
   const setPackage = (id) => {
@@ -57,12 +60,13 @@ export function useOrder(packages, packagingOptions, menuItems) {
     Object.values(customCart.value).reduce((sum, n) => sum + n, 0),
   )
 
-  const customTotalPrice = computed(() =>
-    Object.entries(customCart.value).reduce((sum, [id, qty]) => {
+  const customTotalPrice = computed(() => {
+    const itemsTotal = Object.entries(customCart.value).reduce((sum, [id, qty]) => {
       const item = menuItems.find((m) => m.id === Number(id))
       return sum + (item ? item.price * qty : 0)
-    }, 0),
-  )
+    }, 0)
+    return itemsTotal + packagingCost.value
+  })
 
   // ============ ACTIVATE CUSTOM FROM PAKET BISNIS ============
   const activateCustomFromPackage = (pkg) => {
@@ -140,10 +144,13 @@ export function useOrder(packages, packagingOptions, menuItems) {
       lines.push(`*Paket:* ${pkg.name}`)
       lines.push(`*Jumlah:* ${quantity.value} box`)
       lines.push(`*Harga satuan:* ${formatIDR(pkg.price)}`)
-      lines.push(`*Estimasi total:* ${formatIDR(packageTotal.value)}`)
       if (selectedPackaging.value) {
         lines.push(`*Packaging:* ${selectedPackaging.value.name}`)
+        if (packagingCost.value > 0) {
+          lines.push(`*Biaya packaging:* ${formatIDR(packagingCost.value)}/box`)
+        }
       }
+      lines.push(`*Estimasi total:* ${formatIDR(packageTotal.value)}`)
       // Sertakan isi paket
       if (pkg.fixedItems?.length) {
         lines.push('')
@@ -161,10 +168,13 @@ export function useOrder(packages, packagingOptions, menuItems) {
         : 'Custom Box (Build Your Own)'
       lines.push(`*Mode:* ${headerLabel}`)
       lines.push(`*Total item:* ${customTotalItems.value}`)
-      lines.push(`*Estimasi total:* ${formatIDR(customTotalPrice.value)}`)
       if (selectedPackaging.value) {
         lines.push(`*Packaging:* ${selectedPackaging.value.name}`)
+        if (packagingCost.value > 0) {
+          lines.push(`*Biaya packaging:* ${formatIDR(packagingCost.value)}`)
+        }
       }
+      lines.push(`*Estimasi total:* ${formatIDR(customTotalPrice.value)}`)
       lines.push('')
       lines.push('*Isi box:*')
       Object.entries(customCart.value).forEach(([id, qty]) => {
@@ -199,6 +209,7 @@ export function useOrder(packages, packagingOptions, menuItems) {
     // computed
     selectedPackage,
     selectedPackaging,
+    packagingCost,
     packageTotal,
     customTotalItems,
     customTotalPrice,

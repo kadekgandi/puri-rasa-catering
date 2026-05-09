@@ -1,10 +1,55 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { testimonials } from '@/data/testimonials.js'
 import logoPuriRasa from '@/assets/images/logo-puri-rasa.svg'
 
 const whatsappConsult =
   'https://wa.me/6289517733600?text=Halo%20Puri%20Rasa%2C%20saya%20ingin%20konsultasi%20paket%20katering%20untuk%20acara%20saya.'
+
+// ============ TYPEWRITER EFFECT ============
+const typeWords = ['Masakan Ibu', 'Masakan Autentik', 'Masakan Singaraja']
+const typedText = ref('')
+let wordIndex = 0
+let charIndex = 0
+let isDeleting = false
+let typingTimer = null
+let cursorTimer = null
+
+const TYPING_SPEED = 75 // ms per karakter saat mengetik
+const DELETING_SPEED = 40 // ms per karakter saat menghapus (lebih cepat)
+const PAUSE_AFTER_WORD = 2000 // ms jeda setelah kata selesai diketik
+const PAUSE_BEFORE_TYPE = 350 // ms jeda sebelum mulai mengetik kata baru
+
+const typeEffect = () => {
+  const currentWord = typeWords[wordIndex]
+
+  if (!isDeleting) {
+    // Fase mengetik
+    typedText.value = currentWord.slice(0, charIndex + 1)
+    charIndex++
+
+    if (charIndex === currentWord.length) {
+      // Kata selesai — jeda lalu mulai hapus
+      isDeleting = true
+      typingTimer = setTimeout(typeEffect, PAUSE_AFTER_WORD)
+      return
+    }
+    typingTimer = setTimeout(typeEffect, TYPING_SPEED)
+  } else {
+    // Fase menghapus
+    typedText.value = currentWord.slice(0, charIndex - 1)
+    charIndex--
+
+    if (charIndex === 0) {
+      // Selesai dihapus — pindah ke kata berikutnya
+      isDeleting = false
+      wordIndex = (wordIndex + 1) % typeWords.length
+      typingTimer = setTimeout(typeEffect, PAUSE_BEFORE_TYPE)
+      return
+    }
+    typingTimer = setTimeout(typeEffect, DELETING_SPEED)
+  }
+}
 
 // ============ KATEGORI MENU (Iconic Grid) ============
 const categories = [
@@ -95,6 +140,9 @@ const usps = [
 // ============ SCROLL REVEAL ============
 let observer = null
 onMounted(() => {
+  // Mulai typewriter setelah hero animation selesai
+  typingTimer = setTimeout(typeEffect, 900)
+
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -110,6 +158,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  clearTimeout(typingTimer)
+  clearInterval(cursorTimer)
   if (observer) observer.disconnect()
 })
 </script>
@@ -136,10 +186,14 @@ onUnmounted(() => {
         </span>
 
         <h1 class="hero__title">
-          Kehangatan
-          <em class="hero__title-em">Masakan Keluarga</em>
-          untuk Setiap Momen
-          <span class="hero__title-underline">Spesial</span> Anda.
+          <span class="hero__title-row">Kehangatan</span>
+          <em class="hero__title-em" aria-live="polite" :aria-label="typedText || 'Masakan Ibu'"
+            ><span class="hero__typed" aria-hidden="true">{{ typedText }}</span
+            ><span class="hero__cursor" aria-hidden="true"></span
+          ></em>
+          <span class="hero__title-row hero__title-row--sub">
+            untuk Setiap Momen <span class="hero__title-underline">Spesial</span> Anda.
+          </span>
         </h1>
 
         <RouterLink to="/menu" class="hero-cta">
@@ -620,20 +674,36 @@ onUnmounted(() => {
 
 /* 3. HEADING */
 .hero__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05em;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(2.25rem, 1.5rem + 4vw, 5rem);
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.025em;
   font-variation-settings: 'opsz' 144;
   color: var(--color-white);
   margin-bottom: 1.75rem;
   animation: fadeUp 900ms cubic-bezier(0.4, 0, 0.2, 1) 240ms both;
-  max-width: 18ch;
+}
+
+.hero__title-row {
+  display: block;
+}
+
+/* Baris bawah sedikit lebih kecil agar hierarki jelas */
+.hero__title-row--sub {
+  font-size: 0.72em;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  margin-top: 0.1em;
 }
 
 .hero__title-em {
-  display: inline-block;
+  display: block;
   font-style: italic;
   font-weight: 500;
   background: linear-gradient(120deg, #ffe6b0 0%, #ffb893 50%, #ff8b7a 100%);
@@ -641,6 +711,36 @@ onUnmounted(() => {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-variation-settings: 'opsz' 144;
+  white-space: nowrap;
+  min-height: 1.1em;
+}
+
+.hero__typed {
+  display: inline;
+}
+
+/* Cursor — bar tipis warna gold, blink step-end seperti terminal */
+.hero__cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.75em;
+  background: linear-gradient(180deg, #ffe6b0 0%, #ffb893 100%);
+  border-radius: 1.5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  position: relative;
+  top: -0.05em;
+  animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .hero__title-underline {

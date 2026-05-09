@@ -59,30 +59,44 @@ export const packages = [
 ]
 
 // ============ OPSI PACKAGING ============
+// price = biaya tambahan per box (0 = gratis)
+// requiresBisnis = true berarti hanya tersedia untuk Paket Bisnis & Custom
 export const packagingOptions = [
   {
     id: 'kertas',
     name: 'Kertas Nasi Standar',
     desc: 'Klasik & ramah lingkungan',
     image: '/images/packaging/kertasnasi.svg',
+    price: 0,
+    priceLabel: 'Gratis',
+    requiresBisnis: false,
   },
   {
     id: 'daun',
     name: 'Daun',
     desc: 'Aroma alami & tradisional',
     image: '/images/packaging/daun.svg',
+    price: 0,
+    priceLabel: 'Gratis',
+    requiresBisnis: false,
   },
   {
     id: 'kotak-standar',
     name: 'Kotak Nasi Standar',
     desc: 'Praktis & mudah dibawa',
     image: '/images/packaging/kotakstandar.svg',
+    price: 0,
+    priceLabel: 'Gratis',
+    requiresBisnis: true,
   },
   {
     id: 'besek-bali',
     name: 'Besek Bali',
     desc: 'Estetik anyaman tradisional',
     image: '/images/packaging/besek.svg',
+    price: 10000,
+    priceLabel: '+Rp10.000/box',
+    requiresBisnis: true,
   },
 ]
 

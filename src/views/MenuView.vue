@@ -8,6 +8,48 @@ const order = useOrder(packages, packagingOptions, menuItems)
 // ============ VIEW STATE: 'list' | 'detail' ============
 const view = ref('list')
 
+// ============ PACKAGING MODAL STATE ============
+const showPackagingModal = ref(false)
+const pendingPackagingOpt = ref(null)
+
+// Packaging yang tersedia: Paket Standar & Plus (type: 'fixed') hanya kertas & daun.
+// Paket Bisnis & Custom mendapat semua 4 opsi.
+const availablePackagingOptions = computed(() => {
+  if (order.activeMode.value === 'paket' && order.selectedPackage.value?.type === 'fixed') {
+    return packagingOptions.filter((p) => !p.requiresBisnis)
+  }
+  return packagingOptions
+})
+
+// Packaging yang tidak tersedia (untuk ditampilkan sebagai info)
+const restrictedPackagingOptions = computed(() => {
+  if (order.activeMode.value === 'paket' && order.selectedPackage.value?.type === 'fixed') {
+    return packagingOptions.filter((p) => p.requiresBisnis)
+  }
+  return []
+})
+
+// Buka modal konfirmasi sebelum packaging diterapkan
+const selectPackaging = (opt) => {
+  pendingPackagingOpt.value = opt
+  showPackagingModal.value = true
+}
+
+// Konfirmasi: terapkan packaging yang dipilih
+const confirmPackaging = () => {
+  if (pendingPackagingOpt.value) {
+    order.packagingId.value = pendingPackagingOpt.value.id
+  }
+  showPackagingModal.value = false
+  pendingPackagingOpt.value = null
+}
+
+// Batalkan: tutup modal, jangan ubah pilihan
+const cancelPackaging = () => {
+  showPackagingModal.value = false
+  pendingPackagingOpt.value = null
+}
+
 const openDetail = (id) => {
   order.setPackage(id)
   view.value = 'detail'
@@ -384,18 +426,21 @@ watch(
                 <span class="form-card__step">03</span>
                 <div>
                   <h3 class="form-card__title">Pilihan Packaging</h3>
-                  <p class="form-card__sub">Tap salah satu untuk memilih.</p>
+                  <p class="form-card__sub">
+                    Tap salah satu untuk memilih. Wajib dipilih sebelum memesan.
+                  </p>
                 </div>
               </header>
 
               <div class="packaging-grid">
                 <button
-                  v-for="pkgOpt in packagingOptions"
+                  v-for="pkgOpt in availablePackagingOptions"
                   :key="pkgOpt.id"
                   class="pkg-opt"
                   :class="{ 'is-active': order.packagingId.value === pkgOpt.id }"
-                  @click="order.packagingId.value = pkgOpt.id"
+                  @click="selectPackaging(pkgOpt)"
                   type="button"
+                  :aria-label="`Pilih packaging ${pkgOpt.name}${pkgOpt.price > 0 ? ', biaya tambahan ' + pkgOpt.priceLabel : ', gratis'}`"
                 >
                   <div class="pkg-opt__img">
                     <img :src="pkgOpt.image" :alt="pkgOpt.name" loading="lazy" />
@@ -416,7 +461,37 @@ watch(
                   </div>
                   <span class="pkg-opt__name">{{ pkgOpt.name }}</span>
                   <span class="pkg-opt__desc">{{ pkgOpt.desc }}</span>
+                  <span
+                    class="pkg-opt__price"
+                    :class="{ 'pkg-opt__price--paid': pkgOpt.price > 0 }"
+                    >{{ pkgOpt.priceLabel }}</span
+                  >
                 </button>
+              </div>
+
+              <!-- Info packaging terbatas (hanya muncul di paket standar & plus) -->
+              <div v-if="restrictedPackagingOptions.length > 0" class="packaging-bisnis-info">
+                <span class="packaging-bisnis-info__icon" aria-hidden="true">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </span>
+                <p class="packaging-bisnis-info__text">
+                  <strong>Kotak Nasi Standar</strong> &amp; <strong>Besek Bali</strong> hanya
+                  tersedia untuk <strong>Paket Bisnis</strong>. Pilih Paket Bisnis untuk mengakses
+                  semua opsi packaging premium.
+                </p>
               </div>
             </section>
 
@@ -467,7 +542,20 @@ watch(
                   <span class="summary__label">Packaging</span>
                   <span class="summary__value">{{ order.selectedPackaging.value.name }}</span>
                 </div>
-                <div v-else class="summary__row">
+                <div
+                  v-if="order.selectedPackaging.value && order.selectedPackaging.value.price > 0"
+                  class="summary__row"
+                >
+                  <span class="summary__label">Biaya Packaging</span>
+                  <span class="summary__value summary__value--packaging">
+                    {{ order.formatIDR(order.selectedPackaging.value.price) }}/box ×
+                    {{ order.quantity.value }} =
+                    {{
+                      order.formatIDR(order.selectedPackaging.value.price * order.quantity.value)
+                    }}
+                  </span>
+                </div>
+                <div v-else-if="!order.selectedPackaging.value" class="summary__row">
                   <span class="summary__label">Packaging</span>
                   <span class="summary__value summary__value--warn">Belum dipilih</span>
                 </div>
@@ -664,7 +752,9 @@ watch(
                 <span class="form-card__step">02</span>
                 <div>
                   <h3 class="form-card__title">Pilihan Packaging</h3>
-                  <p class="form-card__sub">Tap salah satu untuk memilih.</p>
+                  <p class="form-card__sub">
+                    Tap salah satu untuk memilih. Wajib dipilih sebelum memesan.
+                  </p>
                 </div>
               </header>
 
@@ -674,8 +764,9 @@ watch(
                   :key="pkgOpt.id"
                   class="pkg-opt"
                   :class="{ 'is-active': order.packagingId.value === pkgOpt.id }"
-                  @click="order.packagingId.value = pkgOpt.id"
+                  @click="selectPackaging(pkgOpt)"
                   type="button"
+                  :aria-label="`Pilih packaging ${pkgOpt.name}${pkgOpt.price > 0 ? ', biaya tambahan ' + pkgOpt.priceLabel : ', gratis'}`"
                 >
                   <div class="pkg-opt__img">
                     <img :src="pkgOpt.image" :alt="pkgOpt.name" loading="lazy" />
@@ -696,6 +787,11 @@ watch(
                   </div>
                   <span class="pkg-opt__name">{{ pkgOpt.name }}</span>
                   <span class="pkg-opt__desc">{{ pkgOpt.desc }}</span>
+                  <span
+                    class="pkg-opt__price"
+                    :class="{ 'pkg-opt__price--paid': pkgOpt.price > 0 }"
+                    >{{ pkgOpt.priceLabel }}</span
+                  >
                 </button>
               </div>
             </section>
@@ -749,7 +845,16 @@ watch(
                   <span class="summary__label">Packaging</span>
                   <span class="summary__value">{{ order.selectedPackaging.value.name }}</span>
                 </div>
-                <div v-else class="summary__row">
+                <div
+                  v-if="order.selectedPackaging.value && order.selectedPackaging.value.price > 0"
+                  class="summary__row"
+                >
+                  <span class="summary__label">Biaya Packaging</span>
+                  <span class="summary__value summary__value--packaging">
+                    +{{ order.formatIDR(order.selectedPackaging.value.price) }}
+                  </span>
+                </div>
+                <div v-else-if="!order.selectedPackaging.value" class="summary__row">
                   <span class="summary__label">Packaging</span>
                   <span class="summary__value summary__value--warn">Belum dipilih</span>
                 </div>
@@ -934,6 +1039,60 @@ watch(
       </div>
     </section>
   </div>
+
+  <!-- ===================== PACKAGING CONFIRMATION MODAL ===================== -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="showPackagingModal"
+        class="modal-overlay"
+        @click.self="cancelPackaging"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="packaging-modal-title"
+      >
+        <div class="modal-card">
+          <div
+            class="modal-card__icon"
+            :class="{ 'modal-card__icon--paid': pendingPackagingOpt?.price > 0 }"
+            aria-hidden="true"
+          >
+            {{ pendingPackagingOpt?.price > 0 ? '🧺' : '📦' }}
+          </div>
+
+          <h3 class="modal-card__title" id="packaging-modal-title">Konfirmasi Packaging</h3>
+
+          <p class="modal-card__desc">
+            Anda memilih <strong>{{ pendingPackagingOpt?.name }}</strong
+            >.
+          </p>
+
+          <div v-if="pendingPackagingOpt?.price > 0" class="modal-card__cost-info">
+            <span class="modal-card__cost-badge"
+              >+{{ order.formatIDR(pendingPackagingOpt.price) }}/box</span
+            >
+            <p class="modal-card__cost-note">
+              Packaging ini dikenakan biaya tambahan. Total akan disesuaikan berdasarkan jumlah box
+              yang dipesan.
+            </p>
+          </div>
+          <div v-else class="modal-card__cost-info modal-card__cost-info--free">
+            <span class="modal-card__cost-badge modal-card__cost-badge--free">✓ Gratis</span>
+            <p class="modal-card__cost-note">Tidak ada biaya tambahan untuk packaging ini.</p>
+          </div>
+
+          <div class="modal-card__actions">
+            <button class="modal-btn modal-btn--cancel" @click="cancelPackaging" type="button">
+              Batalkan
+            </button>
+            <button class="modal-btn modal-btn--confirm" @click="confirmPackaging" type="button">
+              OK, Pilih Ini
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -2687,5 +2846,228 @@ watch(
     font-size: 0.8rem;
     padding: 0.65rem 0.85rem;
   }
+}
+
+/* ===================== PACKAGING PRICE LABEL ===================== */
+.pkg-opt__price {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  margin-top: auto;
+}
+
+.pkg-opt__price--paid {
+  color: var(--color-red);
+}
+
+.detail-section.is-premium .pkg-opt__price {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.detail-section.is-premium .pkg-opt__price--paid {
+  color: var(--color-gold);
+}
+
+/* ===================== PACKAGING BISNIS INFO ===================== */
+.packaging-bisnis-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(178, 58, 58, 0.05);
+  border: 1px solid rgba(178, 58, 58, 0.15);
+  border-radius: var(--radius-md);
+}
+
+.packaging-bisnis-info__icon {
+  flex-shrink: 0;
+  color: var(--color-red);
+  margin-top: 1px;
+}
+
+.packaging-bisnis-info__text {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-charcoal);
+}
+
+.packaging-bisnis-info__text strong {
+  color: var(--color-red);
+}
+
+/* ===================== SUMMARY PACKAGING VALUE ===================== */
+.summary__value--packaging {
+  color: var(--color-red);
+  font-weight: 700;
+}
+
+/* ===================== PACKAGING MODAL ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 10, 9, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.modal-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 32px 64px -16px rgba(15, 10, 9, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
+}
+
+.modal-card__icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  background: var(--color-cream);
+  border: 2px solid rgba(28, 19, 17, 0.06);
+  margin-bottom: 0.25rem;
+}
+
+.modal-card__icon--paid {
+  background: rgba(178, 58, 58, 0.08);
+  border-color: rgba(178, 58, 58, 0.18);
+}
+
+.modal-card__title {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-charcoal);
+}
+
+.modal-card__desc {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.modal-card__desc strong {
+  color: var(--color-charcoal);
+}
+
+.modal-card__cost-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: rgba(178, 58, 58, 0.06);
+  border: 1px dashed rgba(178, 58, 58, 0.25);
+  border-radius: var(--radius-md);
+  width: 100%;
+  margin-block: 0.25rem;
+}
+
+.modal-card__cost-info--free {
+  background: rgba(34, 160, 79, 0.06);
+  border-color: rgba(34, 160, 79, 0.25);
+}
+
+.modal-card__cost-badge {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-red);
+}
+
+.modal-card__cost-badge--free {
+  color: #22a04f;
+}
+
+.modal-card__cost-note {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.modal-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modal-btn--cancel {
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  border: 1px solid rgba(28, 19, 17, 0.1);
+}
+
+.modal-btn--cancel:hover {
+  background: rgba(28, 19, 17, 0.06);
+}
+
+.modal-btn--confirm {
+  background: var(--color-red);
+  color: var(--color-white);
+  box-shadow: var(--shadow-red);
+}
+
+.modal-btn--confirm:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Modal transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 200ms ease;
+}
+
+.modal-enter-active .modal-card,
+.modal-leave-active .modal-card {
+  transition:
+    transform 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 200ms ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-card,
+.modal-leave-to .modal-card {
+  transform: scale(0.92) translateY(8px);
+  opacity: 0;
 }
 </style>
