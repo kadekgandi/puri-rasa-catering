@@ -37,11 +37,7 @@ const services = [
       <!-- KOLOM 1: BRAND -->
       <div class="footer__col footer__brand-col">
         <RouterLink to="/" class="footer__logo">
-          <span class="footer__logo-mark">P</span>
-          <span class="footer__logo-text">
-            <span class="footer__logo-name">Puri Rasa</span>
-            <span class="footer__logo-sub">catering &middot; bali</span>
-          </span>
+          <img src="/logo-pr.png" alt="Puri Rasa Catering" class="footer__logo-img" />
         </RouterLink>
 
         <p class="footer__desc">
@@ -51,7 +47,7 @@ const services = [
 
         <div class="footer__socials">
           <a
-            href="https://instagram.com/"
+            href="https://www.instagram.com/purirasa.id/"
             target="_blank"
             rel="noopener noreferrer"
             class="footer__social"
@@ -73,7 +69,7 @@ const services = [
             </svg>
           </a>
           <a
-            href="https://facebook.com/"
+            href="https://www.facebook.com/purimoli.purimoli/"
             target="_blank"
             rel="noopener noreferrer"
             class="footer__social"
@@ -86,7 +82,7 @@ const services = [
             </svg>
           </a>
           <a
-            href="https://tiktok.com/"
+            href="https://www.tiktok.com/@catering.purirasa"
             target="_blank"
             rel="noopener noreferrer"
             class="footer__social"
@@ -262,51 +258,22 @@ const services = [
 }
 
 .footer__logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: inline-block;
   text-decoration: none;
-  color: var(--color-white);
   margin-bottom: 1rem;
 }
 
-.footer__logo-mark {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  background: var(--color-red);
-  color: var(--color-white);
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 700;
-  font-size: 1.375rem;
-  border-radius: 50%;
-  font-variation-settings: 'opsz' 144;
-  box-shadow: 0 6px 18px rgba(178, 58, 58, 0.4);
+.footer__logo-img {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  filter: brightness(1.05);
+  transition: opacity var(--transition);
 }
 
-.footer__logo-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.footer__logo-name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.375rem;
-  letter-spacing: -0.01em;
-  font-variation-settings: 'opsz' 144;
-}
-
-.footer__logo-sub {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 0.3rem;
+.footer__logo:hover .footer__logo-img {
+  opacity: 0.85;
 }
 
 .footer__desc {

@@ -273,7 +273,7 @@ onUnmounted(() => {
   padding: 0.55rem 0.9rem;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--color-red);
   border-radius: var(--radius-full);
   transition: color var(--transition-fast);
 }
@@ -299,11 +299,25 @@ onUnmounted(() => {
 }
 
 .nav__link.is-active {
-  color: var(--color-red-dark);
+  color: var(--color-red);
   font-weight: 600;
 }
 .nav__link.is-active::before {
   transform: translateX(-50%) scale(1);
+}
+
+/* Saat scroll → navbar putih → teks gelap kembali */
+.navbar.is-scrolled .nav__link {
+  color: var(--color-text);
+}
+.navbar.is-scrolled .nav__link::before {
+  background: var(--color-red);
+}
+.navbar.is-scrolled .nav__link:hover {
+  color: var(--color-red-dark);
+}
+.navbar.is-scrolled .nav__link.is-active {
+  color: var(--color-red-dark);
 }
 
 /* ============ HAMBURGER ============ */

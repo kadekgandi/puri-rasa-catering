@@ -48,8 +48,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) return savedPosition
-    return { top: 0, behavior: 'smooth' }
+    // Gunakan savedPosition HANYA untuk navigasi Back/Forward browser
+    // (bukan refresh), ditandai dengan from.name tidak null
+    if (savedPosition && from.name) return savedPosition
+    return { top: 0 }
   },
 })
 

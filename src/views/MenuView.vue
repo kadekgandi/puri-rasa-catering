@@ -60,11 +60,39 @@ const openDetail = (id) => {
 
 // Lanjut dari Custom List → Custom Detail (review packaging + catatan)
 const goCustomDetail = () => {
-  if (order.customTotalItems.value === 0) return
+  if (!order.customCanProceed.value) return
   view.value = 'detail'
   nextTick(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
   })
+}
+
+// ============ TOAST NOTIFIKASI MIN ORDER ============
+const showMinToast = ref(false)
+let toastTimer = null
+
+const waConsultUrl = `https://wa.me/6289517733600?text=${encodeURIComponent('Halo Puri Rasa, saya ingin konsultasi pesanan di bawah minimum order. Apakah bisa dibantu?')}`
+
+const decQtyWithToast = () => {
+  const atMin = order.decQty()
+  if (atMin) {
+    clearTimeout(toastTimer)
+    showMinToast.value = true
+    toastTimer = setTimeout(() => {
+      showMinToast.value = false
+    }, 2500)
+  }
+}
+
+const decCustomQtyWithToast = () => {
+  const atMin = order.decCustomQty()
+  if (atMin) {
+    clearTimeout(toastTimer)
+    showMinToast.value = true
+    toastTimer = setTimeout(() => {
+      showMinToast.value = false
+    }, 2500)
+  }
 }
 
 const backToList = () => {
@@ -158,6 +186,55 @@ watch(
 
 <template>
   <div class="menu">
+    <!-- TOAST MIN ORDER -->
+    <Transition name="toast">
+      <div v-if="showMinToast" class="min-toast-wrap">
+        <div class="min-toast-backdrop" @click="showMinToast = false"></div>
+        <div class="min-toast" role="alert" aria-live="assertive">
+          <div class="min-toast__body">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>
+              Minimal pemesanan
+              <strong
+                >{{
+                  order.activeMode.value === 'custom' ? order.customMinOrder : order.paketMinOrder
+                }}
+                box</strong
+              >
+            </span>
+          </div>
+          <a
+            :href="waConsultUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="min-toast__cta"
+            @click="showMinToast = false"
+          >
+            Mau Pesan Kurang Dari
+            {{ order.activeMode.value === 'custom' ? order.customMinOrder : order.paketMinOrder }}?
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4-.1-.5-.1-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2 0 1.3.9 2.5 1.1 2.7.1.2 1.9 2.9 4.6 4.1.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.5-.3zM20.5 3.5C18.3 1.2 15.3 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h.1c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.3z"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </Transition>
     <!-- ===================== HERO ===================== -->
     <section v-show="view === 'list'" class="m-hero">
       <div class="container">
@@ -412,7 +489,9 @@ watch(
 
               <div class="qty-row">
                 <div class="stepper">
-                  <button @click="order.decQty" class="stepper__btn" aria-label="Kurangi">−</button>
+                  <button @click="decQtyWithToast" class="stepper__btn" aria-label="Kurangi">
+                    −
+                  </button>
                   <span class="stepper__val">{{ order.quantity.value }}</span>
                   <button @click="order.incQty" class="stepper__btn" aria-label="Tambah">+</button>
                 </div>
@@ -746,10 +825,36 @@ watch(
               </button>
             </section>
 
-            <!-- 02 PACKAGING -->
+            <!-- 02 JUMLAH BOX -->
             <section class="form-card">
               <header class="form-card__head">
                 <span class="form-card__step">02</span>
+                <div>
+                  <h3 class="form-card__title">Jumlah Box</h3>
+                  <p class="form-card__sub">
+                    Berapa bungkus yang ingin dipesan? Min. {{ order.customMinOrder }} box.
+                  </p>
+                </div>
+              </header>
+
+              <div class="qty-row">
+                <div class="stepper">
+                  <button @click="decCustomQtyWithToast" class="stepper__btn" aria-label="Kurangi">
+                    −
+                  </button>
+                  <span class="stepper__val">{{ order.customQuantity.value }}</span>
+                  <button @click="order.incCustomQty" class="stepper__btn" aria-label="Tambah">
+                    +
+                  </button>
+                </div>
+                <span class="qty-row__hint">box</span>
+              </div>
+            </section>
+
+            <!-- 03 PACKAGING -->
+            <section class="form-card">
+              <header class="form-card__head">
+                <span class="form-card__step">03</span>
                 <div>
                   <h3 class="form-card__title">Pilihan Packaging</h3>
                   <p class="form-card__sub">
@@ -796,10 +901,10 @@ watch(
               </div>
             </section>
 
-            <!-- 03 CATATAN -->
+            <!-- 04 CATATAN -->
             <section class="form-card">
               <header class="form-card__head">
-                <span class="form-card__step">03</span>
+                <span class="form-card__step">04</span>
                 <div>
                   <h3 class="form-card__title">Catatan Khusus</h3>
                   <p class="form-card__sub">
@@ -816,10 +921,10 @@ watch(
               ></textarea>
             </section>
 
-            <!-- 04 SUMMARY & CTA -->
+            <!-- 05 SUMMARY & CTA -->
             <section class="form-card form-card--summary">
               <header class="form-card__head">
-                <span class="form-card__step">04</span>
+                <span class="form-card__step">05</span>
                 <div>
                   <h3 class="form-card__title">Konfirmasi Pesanan</h3>
                   <p class="form-card__sub">Review ringkasan sebelum kirim ke WhatsApp.</p>
@@ -838,8 +943,12 @@ watch(
                   </span>
                 </div>
                 <div class="summary__row">
-                  <span class="summary__label">Total Item</span>
-                  <span class="summary__value">{{ order.customTotalItems.value }} item</span>
+                  <span class="summary__label">Jumlah Box</span>
+                  <span class="summary__value">{{ order.customQuantity.value }} box</span>
+                </div>
+                <div class="summary__row">
+                  <span class="summary__label">Jenis Menu</span>
+                  <span class="summary__value">{{ order.uniqueMenuCount.value }} menu</span>
                 </div>
                 <div v-if="order.selectedPackaging.value" class="summary__row">
                   <span class="summary__label">Packaging</span>
@@ -921,6 +1030,47 @@ watch(
             Pilih kombinasi favoritmu dari menu pilihan. Tambah atau kurangi sesuka hati—semua bisa
             kamu atur di sini.
           </p>
+        </div>
+
+        <!-- INFO MIN ORDER -->
+        <div class="custom-info-bar">
+          <div class="custom-info-bar__item">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M9 12h6M12 9v6" />
+            </svg>
+            Min. <strong>{{ order.customMinOrder }} box</strong> per pesanan
+          </div>
+          <span class="custom-info-bar__sep" aria-hidden="true">·</span>
+          <div class="custom-info-bar__item">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="1" />
+              <path d="M9 12h6M9 16h4" />
+            </svg>
+            Dianjurkan min. <strong>{{ order.customMinMenu }} jenis menu</strong>
+            <span class="custom-info-bar__tag">Info</span>
+          </div>
         </div>
 
         <div class="cat-filter" role="tablist">
@@ -1018,7 +1168,30 @@ watch(
               order.formatIDR(order.summaryTotal.value)
             }}</span>
           </div>
-          <button class="big-cta big-cta--continue" @click="goCustomDetail" type="button">
+          <div v-if="!order.customCanProceed.value" class="custom-submit__min-hint">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            Pilih menu dulu · atur jumlah box (min. {{ order.customMinOrder }}) di halaman detail
+          </div>
+          <button
+            class="big-cta big-cta--continue"
+            @click="goCustomDetail"
+            :disabled="!order.customCanProceed.value"
+            type="button"
+          >
             Lanjut ke Detail Pesanan
             <svg
               width="18"
@@ -2424,6 +2597,165 @@ watch(
   background: var(--color-cream);
   border-radius: var(--radius-sm);
   padding: 0.18rem;
+}
+
+.custom-submit__min-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--color-red);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.big-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============ TOAST MIN ORDER ============ */
+/* ============ TOAST MIN ORDER ============ */
+.min-toast-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.min-toast-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.min-toast {
+  position: relative;
+  z-index: 1;
+  background: var(--color-charcoal);
+  color: var(--color-white);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 1.25rem 1.25rem 1rem;
+  width: 300px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.min-toast__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.min-toast__body strong {
+  color: #ffd47a;
+}
+
+.min-toast__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  background: var(--color-red);
+  color: var(--color-white);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s;
+  width: 100%;
+}
+
+.min-toast__cta:hover {
+  background: var(--color-red-dark);
+}
+
+/* Transition */
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease;
+}
+.toast-enter-active .min-toast,
+.toast-leave-active .min-toast {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+}
+.toast-enter-from .min-toast,
+.toast-leave-to .min-toast {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* ============ CUSTOM INFO BAR ============ */
+.custom-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: rgba(178, 58, 58, 0.05);
+  border: 1px solid rgba(178, 58, 58, 0.12);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.84rem;
+  color: var(--color-text-muted);
+}
+
+.custom-info-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.custom-info-bar__item strong {
+  color: var(--color-charcoal);
+}
+
+.custom-info-bar__sep {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.custom-info-bar__tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(178, 58, 58, 0.1);
+  color: var(--color-red);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.2rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .custom-info-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+  .custom-info-bar__sep {
+    display: none;
+  }
 }
 
 .custom-submit {

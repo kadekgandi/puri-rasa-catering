@@ -2,13 +2,18 @@ import { ref, computed } from 'vue'
 
 const WA_NUMBER = '6289517733600'
 
+export const PAKET_MIN_ORDER = 25 // minimum box untuk semua paket
+export const CUSTOM_MIN_ORDER = 20 // minimum box untuk custom menu
+export const CUSTOM_MIN_MENU = 5 // minimum jenis menu (info saja)
+
 const activeMode = ref('paket') // 'paket' | 'custom'
 const selectedPackageId = ref(null)
-const quantity = ref(20)
+const quantity = ref(PAKET_MIN_ORDER)
+const customQuantity = ref(CUSTOM_MIN_ORDER) // jumlah box/bungkus untuk custom
 const packagingId = ref(null)
 const note = ref('')
-const customCart = ref({}) // { [itemId]: count }
-const customSourceLabel = ref('') // label kalau custom dipanggil dari paket bisnis
+const customCart = ref({}) // { [itemId]: count } — komposisi per box
+const customSourceLabel = ref('')
 
 export function useOrder(packages, packagingOptions, menuItems) {
   // ============ PAKET MODE ============
@@ -20,7 +25,6 @@ export function useOrder(packages, packagingOptions, menuItems) {
     () => packagingOptions.find((p) => p.id === packagingId.value) || null,
   )
 
-  // Biaya packaging per box (0 jika tidak dipilih atau gratis)
   const packagingCost = computed(() => selectedPackaging.value?.price ?? 0)
 
   const packageTotal = computed(() => {
@@ -31,15 +35,21 @@ export function useOrder(packages, packagingOptions, menuItems) {
   const setPackage = (id) => {
     selectedPackageId.value = id
     const pkg = packages.find((p) => p.id === id)
-    if (pkg) quantity.value = Math.max(pkg.minOrder || 20, quantity.value)
+    if (pkg) quantity.value = Math.max(pkg.minOrder || PAKET_MIN_ORDER, quantity.value)
   }
 
   const incQty = () => {
     quantity.value += 1
   }
+
+  // Mengembalikan true jika sudah di minimum (untuk trigger toast di View)
   const decQty = () => {
-    const min = selectedPackage.value?.minOrder || 1
-    if (quantity.value > min) quantity.value -= 1
+    const min = selectedPackage.value?.minOrder || PAKET_MIN_ORDER
+    if (quantity.value > min) {
+      quantity.value -= 1
+      return false // berhasil dikurangi
+    }
+    return true // sudah di minimum, tidak bisa dikurangi
   }
 
   // ============ CUSTOM MODE ============
@@ -56,25 +66,45 @@ export function useOrder(packages, packagingOptions, menuItems) {
 
   const itemCount = (id) => customCart.value[id] || 0
 
+  // Jumlah jenis menu yang dipilih (unique items)
+  const uniqueMenuCount = computed(() => Object.keys(customCart.value).length)
+
+  // Total quantity item dalam cart (untuk referensi isi box)
   const customTotalItems = computed(() =>
     Object.values(customCart.value).reduce((sum, n) => sum + n, 0),
   )
 
-  const customTotalPrice = computed(() => {
-    const itemsTotal = Object.entries(customCart.value).reduce((sum, [id, qty]) => {
+  // Harga per box (komposisi × harga satuan)
+  const customPerBoxPrice = computed(() =>
+    Object.entries(customCart.value).reduce((sum, [id, qty]) => {
       const item = menuItems.find((m) => m.id === Number(id))
       return sum + (item ? item.price * qty : 0)
-    }, 0)
-    return itemsTotal + packagingCost.value
-  })
+    }, 0),
+  )
+
+  // Total harga = (harga per box + packaging) × jumlah box
+  const customTotalPrice = computed(
+    () => (customPerBoxPrice.value + packagingCost.value) * customQuantity.value,
+  )
+
+  const incCustomQty = () => {
+    customQuantity.value += 1
+  }
+
+  // Mengembalikan true jika sudah di minimum
+  const decCustomQty = () => {
+    if (customQuantity.value > CUSTOM_MIN_ORDER) {
+      customQuantity.value -= 1
+      return false
+    }
+    return true // sudah di minimum
+  }
 
   // ============ ACTIVATE CUSTOM FROM PAKET BISNIS ============
   const activateCustomFromPackage = (pkg) => {
     if (!pkg?.baseItemIds) return
-    // Reset state lain yg tidak relevan di custom mode supaya fresh start
     note.value = ''
     packagingId.value = null
-    // Build cart fresh (replace, bukan merge)
     const cart = {}
     pkg.baseItemIds.forEach((id) => {
       cart[id] = 1
@@ -84,6 +114,7 @@ export function useOrder(packages, packagingOptions, menuItems) {
     selectedPackageId.value = null
     activeMode.value = 'custom'
   }
+
   const switchMode = (mode) => {
     activeMode.value = mode
     if (mode === 'paket') customSourceLabel.value = ''
@@ -94,30 +125,38 @@ export function useOrder(packages, packagingOptions, menuItems) {
     customSourceLabel.value = ''
   }
 
-  // Reset SEMUA state ke nilai awal (dipanggil setelah submit WA)
   const resetAll = () => {
     activeMode.value = 'paket'
     selectedPackageId.value = null
-    quantity.value = 20
+    quantity.value = PAKET_MIN_ORDER
+    customQuantity.value = CUSTOM_MIN_ORDER
     packagingId.value = null
     note.value = ''
     customCart.value = {}
     customSourceLabel.value = ''
   }
 
-  // ============ SUMMARY (untuk sticky bar) ============
+  // ============ MINIMUM ORDER ============
+  const customCanProceed = computed(
+    () => customQuantity.value >= CUSTOM_MIN_ORDER && uniqueMenuCount.value > 0,
+  )
+  const customMinOrder = CUSTOM_MIN_ORDER
+  const paketMinOrder = PAKET_MIN_ORDER
+  const customMinMenu = CUSTOM_MIN_MENU
+
+  // ============ SUMMARY ============
   const hasOrder = computed(() => {
     if (activeMode.value === 'paket') return !!selectedPackage.value && quantity.value > 0
-    return customTotalItems.value > 0
+    return uniqueMenuCount.value > 0
   })
 
   const summaryLabel = computed(() => {
     if (activeMode.value === 'paket' && selectedPackage.value) {
       return `${selectedPackage.value.name} · ${quantity.value} box`
     }
-    if (activeMode.value === 'custom' && customTotalItems.value > 0) {
+    if (activeMode.value === 'custom' && uniqueMenuCount.value > 0) {
       const prefix = customSourceLabel.value ? `Custom · ${customSourceLabel.value}` : 'Custom Box'
-      return `${prefix} · ${customTotalItems.value} item`
+      return `${prefix} · ${customQuantity.value} box`
     }
     return 'Pilih paket dulu'
   })
@@ -151,7 +190,6 @@ export function useOrder(packages, packagingOptions, menuItems) {
         }
       }
       lines.push(`*Estimasi total:* ${formatIDR(packageTotal.value)}`)
-      // Sertakan isi paket
       if (pkg.fixedItems?.length) {
         lines.push('')
         lines.push('*Isi paket:*')
@@ -167,21 +205,21 @@ export function useOrder(packages, packagingOptions, menuItems) {
         ? `Custom · ${customSourceLabel.value}`
         : 'Custom Box (Build Your Own)'
       lines.push(`*Mode:* ${headerLabel}`)
-      lines.push(`*Total item:* ${customTotalItems.value}`)
+      lines.push(`*Jumlah box:* ${customQuantity.value} box`)
+      lines.push(`*Jumlah jenis menu:* ${uniqueMenuCount.value} menu`)
       if (selectedPackaging.value) {
         lines.push(`*Packaging:* ${selectedPackaging.value.name}`)
         if (packagingCost.value > 0) {
-          lines.push(`*Biaya packaging:* ${formatIDR(packagingCost.value)}`)
+          lines.push(`*Biaya packaging:* ${formatIDR(packagingCost.value)}/box`)
         }
       }
       lines.push(`*Estimasi total:* ${formatIDR(customTotalPrice.value)}`)
       lines.push('')
-      lines.push('*Isi box:*')
+      lines.push(`*Komposisi per box:*`)
       Object.entries(customCart.value).forEach(([id, qty]) => {
         const item = menuItems.find((m) => m.id === Number(id))
-        if (item) {
-          lines.push(`• ${item.name} × ${qty} — ${formatIDR(item.price * qty)}`)
-        }
+        if (item)
+          lines.push(`• ${item.name}${qty > 1 ? ` × ${qty}` : ''} — ${formatIDR(item.price * qty)}`)
       })
       if (note.value.trim()) {
         lines.push('')
@@ -202,6 +240,7 @@ export function useOrder(packages, packagingOptions, menuItems) {
     activeMode,
     selectedPackageId,
     quantity,
+    customQuantity,
     packagingId,
     note,
     customCart,
@@ -212,21 +251,30 @@ export function useOrder(packages, packagingOptions, menuItems) {
     packagingCost,
     packageTotal,
     customTotalItems,
+    uniqueMenuCount,
+    customPerBoxPrice,
     customTotalPrice,
     hasOrder,
     summaryLabel,
     summaryTotal,
+    customCanProceed,
+    // constants
+    customMinOrder,
+    paketMinOrder,
+    customMinMenu,
     // actions
     setPackage,
     incQty,
     decQty,
+    incCustomQty,
+    decCustomQty,
     addItem,
     removeItem,
     itemCount,
     activateCustomFromPackage,
     switchMode,
     resetCustom,
-    resetAll, // ← Tambah resetAll
+    resetAll,
     formatIDR,
     buildWhatsappUrl,
   }
